@@ -1,0 +1,1 @@
+CREATE DEFINER=`mysql_test`@`%` TRIGGER test1.ins_sum BEFORE INSERT ON test1.account FOR EACH ROW SET @wongloong = @wongloong + NEW.amount;

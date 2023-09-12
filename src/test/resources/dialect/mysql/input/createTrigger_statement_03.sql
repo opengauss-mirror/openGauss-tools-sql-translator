@@ -1,0 +1,1 @@
+create trigger trigger1 before insert on table1 for each row insert into table2 values(new.id, new.name);

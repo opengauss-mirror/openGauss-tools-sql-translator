@@ -1,4 +1,4 @@
--- DEFINER 'root'
+-- DEFINER `root`
 CREATE OR REPLACE FUNCTION createFunction_1692ab45b3a540ca863d5612ed34a1b0() RETURNS TRIGGER AS
 $$
 DECLARE
@@ -17,6 +17,7 @@ END LOOP;
 RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
 CREATE TRIGGER tr_before_insert_employee
 BEFORE UPDATE ON t_employee
 FOR EACH ROW

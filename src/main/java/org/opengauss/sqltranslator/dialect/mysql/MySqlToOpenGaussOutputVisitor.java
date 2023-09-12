@@ -213,6 +213,7 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
         List<SQLStatement> statementList = x.getStatementList();
         int currentStatement = 0;
         int statementSize = statementList.size();
+        boolean isBeginPosition = false;
         for (; currentStatement < statementSize; ++currentStatement) {
             if (!(statementList.get(currentStatement) instanceof MySqlDeclareStatement)
                     && !(statementList.get(currentStatement) instanceof MySqlCursorDeclareStatement)) {
@@ -221,7 +222,13 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
             if (currentStatement != 0) {
                 println();
             }
+
             SQLStatement stmt = statementList.get(currentStatement);
+            if (stmt instanceof MySqlCursorDeclareStatement && !isBeginPosition) {
+                isBeginPosition = true;
+                print0(ucase ? "BEGIN" : "begin");
+                println();
+            }
             stmt.accept(this);
             if (statementList.get(currentStatement) instanceof MySqlCursorDeclareStatement) {
                 print(';');
@@ -230,7 +237,9 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
         if (currentStatement > 0) {
             println();
         }
-        print0(ucase ? "BEGIN" : "begin");
+        if (!isBeginPosition) {
+            print0(ucase ? "BEGIN" : "begin");
+        }
         if (!x.isEndOfCommit()) {
             this.indentCount++;
         } else {
@@ -473,8 +482,10 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
                 print0(" = ");
                 x.getValue().accept(this);
             } else {
-                logger.error("openGauss does not support set " + tagetString.toUpperCase() + getTypeAttribute(x));
-                errHandle(x);
+                print0("SET ");
+                x.getTarget().accept(this);
+                print0(" = ");
+                x.getValue().accept(this);
             }
         }
         return false;
@@ -493,10 +504,6 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
             errHandle(x);
         }
         String varName = x.getName();
-        if (varName.startsWith("@")) {
-            logger.error("openGauss does not support variable started with @" + getTypeAttribute(x));
-            errHandle(x);
-        }
         printName0(varName);
         String collate = (String) x.getAttribute("COLLATE");
         if (collate != null) {
@@ -599,6 +606,7 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
         if (x instanceof SQLCreateFunctionStatement) {
             println();
             print("$$language plpgsql;");
+            println();
         }
         if (x instanceof SQLCreateProcedureStatement) {
             println();
@@ -671,12 +679,10 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
     @Override
     public boolean visit(SQLCreateFunctionStatement x) {
         print0(ucase ? "CREATE " : "create ");
-        // ignore definer
-        if (Objects.nonNull(x.getDefiner())) {
+        if (x.getDefiner() != null) {
+            print(ucase ? "DEFINER = " : "definer = ");
+            x.getDefiner().accept(this);
             println();
-            print("-- " + (ucase ? "DEFINER " : "definer ") + x.getDefiner().toString());
-            println();
-            gaussFeatureNotSupportLog("DEFINER when it creates function statement" + getTypeAttribute(x));
         }
         if (x.isOrReplace()) {
             print0(ucase ? "OR REPLACE " : "or replace ");
@@ -707,23 +713,18 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
         String comment = x.getComment();
         if (comment != null) {
             println();
-            print("-- ");
             print(ucase ? " COMMENT " : " comment ");
-            print(ucase ? comment.toUpperCase() : comment.toLowerCase());
+            print("'" + comment + "'");
             println();
-            gaussFeatureNotSupportLog("COMMENT when it creates function statement" + getTypeAttribute(x));
-        }
-        String language = x.getLanguage();
-        if (x.getLanguage() != null) {
-            println();
-            print("-- ");
-            print(ucase ? " LANGUAGE " : " language ");
-            print(ucase ? language.toUpperCase() : language.toLowerCase());
-            println();
-            gaussFeatureNotSupportLog("LANGUAGE SQL when it creates function statement" + getTypeAttribute(x));
         }
         if (x.isDeterministic()) {
-            print(ucase ? " IMMUTABLE" : " immutable");
+            print(ucase ? " DETERMINISTIC " : " deterministic ");
+        }
+        SQLName authid = x.getAuthid();
+        if (authid != null) {
+            this.println();
+            printUcase("SQL SECURITY ");
+            printUcase(authid.toString());
         }
         println();
         print0("AS $$");
@@ -733,7 +734,6 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
         } else {
             println("BEGIN");
             x.getBlock().accept(this);
-            print0(";");
             println();
             printUcase("END");
         }
@@ -742,18 +742,51 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
 
     @Override
     public boolean visit(SQLAlterFunctionStatement x) {
-        logger.error("openGauss does not support alter function statement" + getTypeAttribute(x));
-        errHandle(x);
+        printUcase("alter function ");
+        print(x.getName().toString());
+        if (x.isContainsSql()) {
+            print(ucase ? " CONTAINS SQL" : "contains sql");
+        }
+        if (x.getComment() != null) {
+            print(ucase ? " COMMENT " + x.getComment() : " comment " + x.getComment());
+        }
+        if (x.getSqlSecurity() != null) {
+            print(ucase ? " SQL SECURITY " + x.getSqlSecurity() : " sql security " + x.getSqlSecurity());
+        }
+        if (x.isLanguageSql()) {
+            print(" language sql");
+        }
+        return false;
+    }
+
+    @Override
+    public boolean visit(SQLAlterProcedureStatement x) {
+        printUcase("alter procedure ");
+        print(x.getName().toString());
+        if (x.isContainsSql()) {
+            print(ucase ? " CONTAINS SQL" : "contains sql");
+        }
+        if (x.getComment() != null) {
+            print(ucase ? " COMMENT " + x.getComment() : " comment " + x.getComment());
+        }
+        if (x.getSqlSecurity() != null) {
+            print(ucase ? " SQL SECURITY " + x.getSqlSecurity() : " sql security " + x.getSqlSecurity());
+        }
+        if (x.isLanguageSql()) {
+            print(" language sql");
+        }
         return false;
     }
 
     @Override
     public boolean visit(SQLCreateProcedureStatement x) {
-        printUcase("create procedure ");
-        if (Objects.nonNull(x.getDefiner())) {
-            printNotSupportWord((ucase ? "DEFINER = " : "definer = ") + x.getDefiner());
-            gaussFeatureNotSupportLog("DEFINER when it creates procedure" + getTypeAttribute(x));
+        printUcase("create ");
+        if (x.getDefiner() != null) {
+            print(ucase ? "DEFINER = " : "definer = ");
+            x.getDefiner().accept(this);
+            println();
         }
+        printUcase("procedure ");
         x.getName().accept(this);
         int paramSize = x.getParameters().size();
         this.print0(" (");
@@ -772,13 +805,16 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
             this.println();
         }
         this.print(')');
+
         if (x.getComment() != null) {
-            printNotSupportWord((ucase ? "COMMENT " : "comment ") + x.getComment().toString());
-            gaussFeatureNotSupportLog("COMMENT when it creates procedure" + getTypeAttribute(x));
+            String comment = x.getComment().toString();
+            println();
+            print(ucase ? " COMMENT " : " comment ");
+            print(comment);
+            println();
         }
         if (x.isLanguageSql()) {
-            printUcaseNotSupportWord("LANGUAGE SQL");
-            gaussFeatureNotSupportLog("LANGUAGE SQL when it creates procedure" + getTypeAttribute(x));
+            print(ucase ? " LANGUAGE SQL " : " language sql ");
         }
         if (x.isDeterministic()) {
             boolean isModifyDatabase = false;
@@ -797,31 +833,27 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
                 logger.warn(
                         "a stable and immutable function cannot modify the database,deterministic will be translated to volatile"
                                 + getTypeAttribute(x));
-                printUcase("volatile");
+                printUcase("volatile ");
             } else {
-                printUcase("immutable");
+                printUcase("deterministic ");
             }
         }
         if (x.isContainsSql()) {
-            printUcaseNotSupportWord("CONTAINS SQL");
-            gaussFeatureNotSupportLog("CONTAINS SQL when it creates procedure" + getTypeAttribute(x));
+            print(ucase ? "CONTAINS SQL " : "contains sql ");
         }
         if (x.isNoSql()) {
-            printUcaseNotSupportWord("NO SQL");
-            gaussFeatureNotSupportLog("NO SQL when it creates procedure" + getTypeAttribute(x));
+            print(ucase ? "NO SQL " : "no sql ");
         }
         if (x.isReadSqlData()) {
-            printUcaseNotSupportWord("READS SQL DATA");
-            gaussFeatureNotSupportLog("READ SQL DATA when it creates procedure" + getTypeAttribute(x));
+            print(ucase ? "READS SQL DATA" : "reads sql data ");
         }
         if (x.isModifiesSqlData()) {
-            printUcaseNotSupportWord("MODIFIES SQL DATA");
-            gaussFeatureNotSupportLog("MODIFIES SQL DATA when it creates procedure" + getTypeAttribute(x));
+            print(ucase ? "MODIFIES SQL DATA " : "modifies sql data ");
         }
         SQLName authid = x.getAuthid();
         if (authid != null) {
             this.println();
-            printUcase("SECURITY ");
+            printUcase("SQL SECURITY ");
             printUcase(authid.toString());
         }
         println();
@@ -832,7 +864,9 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
         } else {
             println("BEGIN");
             x.getBlock().accept(this);
-            print0(";");
+            if ((x.getBlock().getClass()) == SQLSelectStatement.class) {
+                print0(";");
+            }
             println();
             printUcase("END");
         }
@@ -1765,11 +1799,11 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
             printUcaseNotSupportWord("storage " + storage);
             gaussFeatureNotSupportLog("STORAGE in column definition" + getTypeAttribute(x));
         }
-        // SQLExpr onUpdate = x.getOnUpdate();
-        // if (onUpdate != null) {
-        // this.print0(this.ucase ? " ON UPDATE " : " on update ");
-        // onUpdate.accept(this);
-        // }
+        SQLExpr onUpdate = x.getOnUpdate();
+        if (onUpdate != null) {
+            this.print0(this.ucase ? " ON UPDATE " : " on update ");
+            onUpdate.accept(this);
+        }
         if (x.getAsExpr() != null) {
             printUcaseNotSupportWord("as");
             gaussFeatureNotSupportLog("AS in column definition" + getTypeAttribute(x));
@@ -2024,7 +2058,8 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
     public boolean visit(SQLCreateTriggerStatement x) {
         // openGauss has no DEFINER field
         if (Objects.nonNull(x.getDefiner())) {
-            print("-- " + (ucase ? "DEFINER " : "definer ") + x.getDefiner().toString());
+            print("-- " + (ucase ? "DEFINER " : "definer "));
+            x.getDefiner().accept(this);
             println();
             gaussFeatureNotSupportLog("DEFINER when it creates trigger" + getTypeAttribute(x));
         }
@@ -2074,10 +2109,12 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
                 println();
             }
         }
-        if (x.isUpdate() || x.isInsert()) {
-            println("RETURN NEW;");
-        } else {
-            println("RETURN OLD;");
+        if (! (x.getBody() instanceof SQLSetStatement)) {
+            if (x.isUpdate() || x.isInsert()) {
+                println("RETURN NEW;");
+            } else {
+                println("RETURN OLD;");
+            }
         }
         println("END;");
         println("$$ LANGUAGE plpgsql;");
@@ -2105,13 +2142,6 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
         println();
         println("FOR EACH ROW");
         println("EXECUTE PROCEDURE " + function_name + "();");
-        return false;
-    }
-
-    @Override
-    public boolean visit(SQLDropTriggerStatement x) {
-        logger.error("drop trigger statement is incompatible with OpenGauss" + getTypeAttribute(x));
-        errHandle(x);
         return false;
     }
 
@@ -2373,14 +2403,6 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
         return false;
     }
 
-    // 13.2.8 REPLACE Statement
-    @Override
-    public boolean visit(SQLReplaceStatement x) {
-        logger.error("replace statement is incompatible with openGauss" + getTypeAttribute(x));
-        errHandle(x);
-        return false;
-    }
-
     @Override
     public boolean visit(SQLCreateViewStatement x) {
         print0(ucase ? "CREATE " : "create ");
@@ -2394,27 +2416,21 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
             println();
             String algorithm = x.getAlgorithm();
             if (algorithm != null && algorithm.length() > 0) {
-                print("-- ");
                 print0(ucase ? "ALGORITHM = " : "algorithm = ");
                 print0(algorithm);
                 println();
-                gaussFeatureNotSupportLog("ALGORITHM when it creates view" + getTypeAttribute(x));
             }
             SQLName definer = x.getDefiner();
             if (definer != null) {
-                print("-- ");
                 print0(ucase ? "DEFINER = " : "definer = ");
                 definer.accept(this);
                 println();
-                gaussFeatureNotSupportLog("DEFINER when it creates view" + getTypeAttribute(x));
             }
             String sqlSecurity = x.getSqlSecurity();
             if (sqlSecurity != null && sqlSecurity.length() > 0) {
-                print("-- ");
-                print0(ucase ? "SQL SECURITY = " : "sql security = ");
+                print0(ucase ? "SQL SECURITY " : "sql security ");
                 print0(sqlSecurity);
                 println();
-                gaussFeatureNotSupportLog("SQL SECURITY when it creates view" + getTypeAttribute(x));
             }
         }
         this.indentCount--;
@@ -2475,35 +2491,25 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
 
     @Override
     public boolean visit(SQLAlterViewStatement x) {
-        print0(ucase ? "CREATE OR REPLACE " : "create or replace ");
+        print0(ucase ? "ALTER " : "alter ");
         this.indentCount++;
         String algorithm = x.getAlgorithm();
         if (algorithm != null && algorithm.length() > 0) {
-            println();
-            print("-- ");
             print0(ucase ? "ALGORITHM = " : "algorithm = ");
             print0(algorithm);
             println();
-            gaussFeatureNotSupportLog("ALGORITHM when it alters view" + getTypeAttribute(x));
         }
-        // ignore definer
         SQLName definer = x.getDefiner();
         if (definer != null) {
-            println();
-            print("-- ");
             print0(ucase ? "DEFINER = " : "definer = ");
             definer.accept(this);
             println();
-            gaussFeatureNotSupportLog("DEFINER when it alters view" + getTypeAttribute(x));
         }
         String sqlSecurity = x.getSqlSecurity();
         if (sqlSecurity != null && sqlSecurity.length() > 0) {
-            println();
-            print("-- ");
             print0(ucase ? "SQL SECURITY " : "sql security ");
             print0(sqlSecurity);
             println();
-            gaussFeatureNotSupportLog("SQL SECURITY when it alters view" + getTypeAttribute(x));
         }
         this.indentCount--;
         print0(ucase ? "VIEW " : "view ");
@@ -3194,10 +3200,10 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
     @Override
     public boolean visit(MySqlCreateUserStatement x) {
         print0(this.ucase ? "CREATE USER " : "create user ");
-        if (x.getUsers().size() > 1)
-            printAndAccept(x.getUsers(), ";CREATE USER ");
-        else
-            printAndAccept(x.getUsers(), " ");
+        if (x.isIfNotExists()) {
+            print0(this.ucase ? "IF NOT EXISTS " : "if not exists");
+        }
+        printAndAccept(x.getUsers(), " ");
         return false;
     }
 
@@ -3221,30 +3227,41 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
 
     @Override
     public boolean visit(MySqlUserName x) {
+        StringBuilder buf = new StringBuilder();
         String userName = x.getUserName();
-        printnamewithquote(userName);
-        if (x.getHost() != null) {
-            println();
-            print("-- ");
-            print('@');
-            String host = x.getHost();
-            if (host.length() > 0 && host.charAt(0) == '\'') {
-                print0(host);
-            } else {
-                print('\'');
-                print0(host);
-                print('\'');
-            }
-            println();
-            gaussFeatureNotSupportLog("host_name when it creates user" + getTypeAttribute(x));
+        String host = x.getHost();
+        if (userName.length() != 0 && (userName.charAt(0) == '\'' || userName.charAt(0) == '`')) {
+            buf.append(userName);
+        } else {
+            buf.append('\'');
+            buf.append(userName);
+            buf.append('\'');
         }
-        // related to ALTER USER
+
+        // For openGauss, the hostname `%` is not supported, it only support IP.
+        if (!"`%`".equals(host)) {
+            buf.append('@');
+            if (host.length() != 0 && (host.charAt(0) == '\'' || host.charAt(0) == '`')) {
+                buf.append(host);
+            } else {
+                buf.append('\'');
+                buf.append(host);
+                buf.append('\'');
+            }
+        }
+
         String identifiedBy = x.getIdentifiedBy();
         if (identifiedBy != null) {
-            print0(this.ucase ? " IDENTIFIED BY '" : " identified by '");
-            print0(identifiedBy);
-            print('\'');
+            if (this.ucase) {
+                buf.append(" IDENTIFIED BY '");
+            } else {
+                buf.append("identified by '");
+            }
+            buf.append(identifiedBy);
+            buf.append("'");
         }
+
+        print(buf.toString());
         return false;
     }
 
@@ -3444,41 +3461,8 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
     }
 
     @Override
-    public boolean visit(MySqlCursorDeclareStatement x) {
-        printUcase("cursor ");
-        printExpr((SQLExpr) x.getCursorName(), this.parameterized);
-        this.indentCount++;
-        println();
-        x.getSelect().accept(this);
-        this.indentCount--;
-        return false;
-    }
-
-    @Override
-    public boolean visit(SQLFetchStatement x) {
-        logger.error("the cursor fetch statement is incompatible with openGauss" + getTypeAttribute(x));
-        errHandle(x, "FETCH");
-        return false;
-    }
-
-    @Override
-    public boolean visit(SQLOpenStatement x) {
-        logger.error("openGauss does not support cursor open statement" + getTypeAttribute(x));
-        errHandle(x);
-        return false;
-    }
-
-    @Override
-    public boolean visit(MySqlDeclareConditionStatement x) {
-        logger.error("openGauss does not support declare ... condition Statement" + getTypeAttribute(x));
-        errHandle(x);
-        return false;
-    }
-
-    @Override
     public boolean visit(MySqlDeclareHandlerStatement x) {
-        logger.error("openGauss does not support declare ... handler statement" + getTypeAttribute(x));
-        errHandle(x);
+        println(x.toString());
         return false;
     }
 

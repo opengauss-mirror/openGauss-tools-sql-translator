@@ -4,6 +4,7 @@ CREATE TABLE test1 (
 -- COMMENT 'char'
 -- COLUMN_FORMAT fixed
 -- STORAGE DISK
+
 );
 COMMENT ON COLUMN test1.name IS 'char';
 CREATE TABLE "testIndexKey" (
@@ -34,6 +35,7 @@ CREATE TABLE "testPrimaryUniqueKey" (
 	col5 INTEGER,
 	CONSTRAINT ck_con CHECK (id > 0)
 --  NOT ENFORCED
+
 );
 CREATE TABLE "testIndexKey" (
 	id INTEGER,

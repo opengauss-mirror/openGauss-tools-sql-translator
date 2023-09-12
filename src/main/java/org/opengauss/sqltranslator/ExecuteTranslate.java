@@ -17,10 +17,7 @@ public class ExecuteTranslate {
 
     public static void main(String[] args) {
         String raw_sql = "";
-        boolean column_case_sensitive = true;
-        if (args.length == 3) {
-            column_case_sensitive = false;
-        }
+        boolean column_case_sensitive = false;
         byte[] decode = Base64.getDecoder().decode(args[1]);
         try {
             raw_sql = new String(decode, "utf-8");

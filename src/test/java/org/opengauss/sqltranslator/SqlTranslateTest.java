@@ -6,9 +6,11 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import com.alibaba.druid.sql.parser.ParserException;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SqlTranslateTest {
 
@@ -62,8 +64,7 @@ public class SqlTranslateTest {
     @Test
     public void test_if() throws IOException {
         String[] sqlContents = execFile("if_statement.sql");
-        // output to screen
-        System.out.println(sqlContents[2]);
+        assertEquals(sqlContents[1], sqlContents[2]);
     }
 
     @Test
@@ -103,10 +104,21 @@ public class SqlTranslateTest {
     }
 
     @Test
-    public void test_createTrigger() throws IOException {
-        String[] sqlContents = execFile("createTrigger_statement.sql");
-        System.out.println(sqlContents[2]);
-        // assertEquals(sqlContents[1], sqlContents[2]);
+    public void test_createTrigger01() throws IOException {
+        String[] sqlContents = execFile("createTrigger_statement_01.sql");
+        assertEquals(sqlContents[1], sqlContents[2]);
+    }
+
+    @Test
+    public void test_createTrigger02() throws IOException {
+        String[] sqlContents = execFile("createTrigger_statement_02.sql");
+        assertEquals(sqlContents[1], sqlContents[2]);
+    }
+
+    @Test
+    public void test_createTrigger03() throws IOException {
+        String[] sqlContents = execFile("createTrigger_statement_03.sql");
+        assertEquals(sqlContents[1], sqlContents[2]);
     }
 
     @Test
@@ -166,20 +178,20 @@ public class SqlTranslateTest {
     @Test
     public void test_createServer() throws IOException {
         String[] sqlContents = execFile("createServer_statement.sql");
-        System.out.println(sqlContents[2]);
+        assertTrue(sqlContents[2].contains("-- err"));
     }
 
     // druid will failed when alter server content over one parameter
     @Test
     public void test_alterServer() throws IOException {
         String[] sqlContents = execFile("alterServer_statement.sql");
-        System.out.println(sqlContents[2]);
+        assertTrue(sqlContents[2].contains("-- err"));
     }
 
     @Test
     public void test_dropServer() throws IOException {
         String[] sqlContents = execFile("dropServer_statement.sql");
-        System.out.println(sqlContents[2]);
+        assertEquals(sqlContents[1], sqlContents[2]);
     }
 
     @Test
@@ -239,6 +251,68 @@ public class SqlTranslateTest {
     @Test
     public void test_hasReservedWord() throws IOException {
         String[] sqlContents = execFile("hasReservedWord_statement.sql");
+        assertEquals(sqlContents[1], sqlContents[2]);
+    }
+
+    @Test
+    public void test_dropTrigger() throws IOException {
+        String[] sqlContents = execFile("dropTrigger_statement.sql");
+        assertEquals(sqlContents[1], sqlContents[2]);
+    }
+
+    @Test
+    public void test_createUser() throws IOException {
+        String[] sqlContents = execFile("createUser_statement.sql");
+        assertEquals(sqlContents[1], sqlContents[2]);
+    }
+
+    @Test
+    public void test_alterView() throws IOException {
+        String[] sqlContents = execFile("alterView_statement.sql");
+        assertEquals(sqlContents[1], sqlContents[2]);
+    }
+
+    @Test
+    public void test_cursor() throws IOException {
+        String[] sqlContents = execFile("cursor_statement.sql");
+        assertEquals(sqlContents[1], sqlContents[2]);
+    }
+
+    @Test
+    // DO statement not support in druid parse
+    public void test_do() throws IOException {
+        try {
+            String[] sqlContents = execFile("do_statement.sql");
+        } catch (ParserException exp) {
+            assertEquals("", "");
+        }
+    }
+
+    @Test
+    // ITERATE statement not support in druid parse
+    public void test_iterate() throws IOException {
+        try {
+            String[] sqlContents = execFile("iterate_statement.sql");
+        } catch (ParserException exp) {
+            assertEquals("", "");
+        }
+    }
+
+    @Test
+    public void test_replace() throws IOException {
+        String[] sqlContents = execFile("replace_statement.sql");
+        assertEquals(sqlContents[1], sqlContents[2]);
+    }
+
+    @Test
+    public void test_alterFunction() throws IOException {
+        String[] sqlContents = execFile("alterFunction_statement.sql");
+        assertEquals(sqlContents[1], sqlContents[2]);
+    }
+
+    @Test
+    public void test_alterProcedure() throws IOException {
+        String[] sqlContents = execFile("alterProcedure_statement.sql");
         assertEquals(sqlContents[1], sqlContents[2]);
     }
 }

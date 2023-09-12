@@ -1,4 +1,6 @@
-CREATE OR REPLACE
+ALTER ALGORITHM=UNDEFINED DEFINER='mysql_test'@'%' SQL SECURITY DEFINER VIEW `view1` AS select `test`.`id` AS `id` from `test`;
+ALTER ALGORITHM=UNDEFINED DEFINER=mysql_test SQL SECURITY DEFINER VIEW `view1` AS select `test`.`id` AS `id` from `test`;
+ALTER
 	ALGORITHM = merge
 	DEFINER = current_user
 	SQL SECURITY definer
@@ -14,15 +16,15 @@ FROM "Employee" emp
 CREATE TABLE test (
 	id INTEGER
 );
-CREATE
+ALTER
 	ALGORITHM = UNDEFINED
-	DEFINER = `mysql_test`
+	DEFINER = 'mysql_test'@'%'
 	SQL SECURITY DEFINER
 	VIEW "view1"
 AS
 SELECT "test"."id" AS "id"
 FROM "test";
-CREATE
+ALTER
 	ALGORITHM = UNDEFINED
 	DEFINER = mysql_test
 	SQL SECURITY DEFINER
