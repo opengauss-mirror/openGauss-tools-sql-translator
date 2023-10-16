@@ -1,5 +1,18 @@
-CREATE OR REPLACE
-	ALGORITHM = merge
+ALTER ALGORITHM = UNDEFINED
+	DEFINER = 'mysql_test'@'%'
+	SQL SECURITY DEFINER
+	VIEW "view1"
+AS
+SELECT "test"."id" AS "id"
+FROM "test";
+ALTER ALGORITHM = UNDEFINED
+	DEFINER = mysql_test
+	SQL SECURITY DEFINER
+	VIEW "view1"
+AS
+SELECT "test"."id" AS "id"
+FROM "test";
+ALTER ALGORITHM = merge
 	DEFINER = current_user
 	SQL SECURITY definer
 	VIEW "vwEmployeesByDepartment"
@@ -7,23 +20,18 @@ AS
 SELECT emp."ID", emp."Name", emp."Salary", CAST(emp."DOB" AS DATE) AS "DOB", emp."Gender"
 	, dept."Name" AS "DepartmentName"
 FROM "Employee" emp
-	INNER JOIN "Department" dept ON emp."DeptID" = dept."ID"
--- WITH CHECK OPTION
--- CASCADED
-;
+	INNER JOIN "Department" dept ON emp."DeptID" = dept."ID";
 CREATE TABLE test (
 	id INTEGER
 );
-CREATE
-	ALGORITHM = UNDEFINED
-	DEFINER = `mysql_test`
+ALTER ALGORITHM = UNDEFINED
+	DEFINER = 'mysql_test'@'%'
 	SQL SECURITY DEFINER
 	VIEW "view1"
 AS
 SELECT "test"."id" AS "id"
 FROM "test";
-CREATE
-	ALGORITHM = UNDEFINED
+ALTER ALGORITHM = UNDEFINED
 	DEFINER = mysql_test
 	SQL SECURITY DEFINER
 	VIEW "view1"

@@ -1,4 +1,4 @@
-CREATE Definer='root' TRIGGER tr_before_insert_employee
+CREATE Definer=`root`@`%` TRIGGER tr_before_insert_employee
                 BEFORE UPDATE
                 ON t_employee
                 FOR EACH ROW
@@ -13,3 +13,5 @@ CREATE Definer='root' TRIGGER tr_before_insert_employee
                         set new.work_year=new.work_year+1;
                     until  new.work_year>10 end repeat;
                 END;
+
+

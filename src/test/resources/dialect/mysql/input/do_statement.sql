@@ -1,0 +1,10 @@
+--simple expr;
+do 1;
+do 1+1;
+do 1+3;
+do 2*4;
+--multi expr
+do 1,1,1,1;
+do 1+1,2,3+3;
+do 1+3,6;
+do 2*4,9;

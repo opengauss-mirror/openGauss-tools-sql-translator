@@ -1,11 +1,11 @@
-create  definer = root procedure p1 (in id int,out res int,inout a int) deterministic
+create  definer = `root`@`%` procedure p1 (in id int,out res int,inout a int) deterministic
     language sql contains sql sql security INVOKER
 begin
     select count(id) into res from data where data.id > id;
 
 end;
 
-create   definer = root procedure p2 ()
+create   definer = `root`@`%` procedure p2 ()
     language sql contains sql sql security DEFINER
 begin
    create table data2(id int);
@@ -30,3 +30,32 @@ begin
 update  data
 set data.id = data.id*1.2;
 end;
+
+create user usr2@'%' identified by 'Test@123';
+CREATE DEFINER=`usr2`@`%` PROCEDURE definer() SQL SECURITY DEFINER
+BEGIN
+   update data set data.id = data.id*1.2;
+END;
+
+CREATE DEFINER = `usr2`@`%` PROCEDURE definer1()
+BEGIN
+	UPDATE data SET data.id = data.id * 1.2;
+END;
+
+-- demiliter ;
+create table user1 (id int primary key,username varchar ( 50 ),password varchar ( 50 ));
+-- delimiter $$
+create procedure proc16_while(in insertcount int)
+begin
+declare
+ i int default 1;
+label: while i<=insertcount
+do
+insert into user1(id,username,`password`) values(i,concat('user-',i),'123456');
+set i=i+1;
+end while label;
+end
+-- $$
+-- delimiter ;
+-- call proc16_while(10);
+create procedure yy_dd() select * from test4;
