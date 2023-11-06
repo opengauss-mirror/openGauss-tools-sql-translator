@@ -1,4 +1,4 @@
-CREATE DEFINER = `root`
+CREATE DEFINER = `root`@`%`
 PROCEDURE p1 (
 	IN id INTEGER,
 	OUT res INTEGER,
@@ -14,7 +14,7 @@ BEGIN
 	WHERE data.id > id;
 END;
 /
-CREATE DEFINER = `root`
+CREATE DEFINER = `root`@`%`
 PROCEDURE p2 () LANGUAGE SQL CONTAINS SQL
 SQL SECURITY DEFINER
 AS
@@ -50,7 +50,7 @@ BEGIN
 END;
 /
 CREATE USER 'usr2'@'%' IDENTIFIED BY 'Test@123';
-CREATE DEFINER = `usr2`
+CREATE DEFINER = `usr2`@`%`
 PROCEDURE definer ()
 SQL SECURITY DEFINER
 AS
@@ -59,7 +59,7 @@ BEGIN
 	SET data.id = data.id * 1.2;
 END;
 /
-CREATE DEFINER = `usr2`
+CREATE DEFINER = `usr2`@`%`
 PROCEDURE definer1 ()
 AS
 BEGIN
@@ -91,5 +91,32 @@ AS
 BEGIN
 SELECT *
 FROM test4;
+END;
+/
+CREATE PROCEDURE proc_object0055 ()
+AS
+BEGIN
+	DECLARE no_such_table CONDITION FOR 1146
+	;
+	DECLARE CONTINUE HANDLER FOR no_such_table
+	BEGIN
+		INSERT INTO tb_object0055
+		VALUES (1, 'Mr.Wang'),
+			(2, 'Mr.Li'),
+			(3, 'Mr.shi'),
+			(4, 'Mr.zhang');
+	END;
+
+	DROP TABLE IF EXISTS tb_object0055;
+	CREATE TABLE tb_object0055 (
+		id INTEGER,
+		name VARCHAR(64) COMMENT '姓名'
+	);
+	INSERT
+	INTO tb_object0055
+	VALUES (1, 'Mr.Wang'),
+		(2, 'Mr.Li'),
+		(3, 'Mr.shi'),
+		(4, 'Mr.zhang');
 END;
 /

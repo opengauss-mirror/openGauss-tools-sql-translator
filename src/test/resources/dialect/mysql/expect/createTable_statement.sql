@@ -113,8 +113,7 @@ CREATE TABLE t11 (
 	col1 INTEGER PRIMARY KEY NOT NULL DEFAULT 1,
 	col2 BIGSERIAL
 -- COLLATE UTF8_BIN
- UNIQUE
--- COMMENT 'string'
+ UNIQUE COMMENT 'string'
 -- COLUMN_FORMAT fixed
 -- STORAGE DISK
 ,
@@ -123,7 +122,6 @@ CREATE TABLE t11 (
 -- VIRTUAL
 
 );
-COMMENT ON COLUMN t11.col2 IS 'string';
 -- hash(methodInvoke)
 -- subPartition name
 -- improper number of columns
