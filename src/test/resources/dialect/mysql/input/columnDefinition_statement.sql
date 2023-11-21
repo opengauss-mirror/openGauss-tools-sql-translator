@@ -1,6 +1,6 @@
 create table test1(
     `id` int(10) auto_increment primary key ,
-    name char(2) not null default  'GA' unique comment 'char'column_format fixed storage disk
+    name char(2) not null default  'GA' unique comment 'char' column_format fixed storage disk
 );
 create table testIndexKey (
     id int,

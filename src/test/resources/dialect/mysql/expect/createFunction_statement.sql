@@ -1,4 +1,4 @@
-CREATE DEFINER = `root`
+CREATE DEFINER = `root`@`%`
 FUNCTION "doIterate"(
 		p INTEGER,
 		q INTEGER
@@ -37,7 +37,7 @@ FUNCTION "doIterate"(
 END;
 $$language plpgsql;
 
-CREATE DEFINER = `mysql_test`
+CREATE DEFINER = `mysql_test`@`%`
 FUNCTION "double_input"(
 		x INTEGER
 	)
@@ -52,7 +52,7 @@ FUNCTION "double_input"(
 	END
 	$$language plpgsql;
 
-	CREATE DEFINER = `mysql_test`
+	CREATE DEFINER = `mysql_test`@`%`
 	FUNCTION "double_input1"(
 			x INTEGER,
 			y INTEGER,

@@ -1,4 +1,7 @@
--- DEFINER `root`
+CREATE TABLE t_employee (
+	work_year INTEGER
+);
+-- DEFINER `root`@`%`
 CREATE OR REPLACE FUNCTION createFunction_1692ab45b3a540ca863d5612ed34a1b0() RETURNS TRIGGER AS
 $$
 DECLARE

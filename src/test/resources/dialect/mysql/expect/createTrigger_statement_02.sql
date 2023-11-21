@@ -1,4 +1,4 @@
--- DEFINER `mysql_test`
+-- DEFINER `mysql_test`@`%`
 CREATE OR REPLACE FUNCTION createFunction_5e55ac4ac3e940efb7e838c4b62128cf() RETURNS TRIGGER AS
 $$
 DECLARE

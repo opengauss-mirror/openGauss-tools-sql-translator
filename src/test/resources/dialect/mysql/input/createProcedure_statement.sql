@@ -59,3 +59,15 @@ end
 -- delimiter ;
 -- call proc16_while(10);
 create procedure yy_dd() select * from test4;
+
+create procedure proc_object0055()
+begin
+declare no_such_table condition for 1146;
+declare continue handler for no_such_table
+begin
+insert tb_object0055 values(1,'Mr.Wang'),(2,'Mr.Li'),(3,'Mr.shi'),(4,'Mr.zhang');
+end;
+drop table if exists tb_object0055;
+create table tb_object0055(id int,name varchar(64) comment '姓名');
+insert tb_object0055 values(1,'Mr.Wang'),(2,'Mr.Li'),(3,'Mr.shi'),(4,'Mr.zhang');
+end;

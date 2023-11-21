@@ -1,3 +1,4 @@
+create table t_employee(work_year int);
 CREATE Definer=`root`@`%` TRIGGER tr_before_insert_employee
                 BEFORE UPDATE
                 ON t_employee

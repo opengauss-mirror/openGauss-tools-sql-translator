@@ -32,3 +32,7 @@ ALTER
 AS
 SELECT "test"."id" AS "id"
 FROM "test";
+
+ALTER ALGORITHM = UNDEFINED DEFINER = mysql_test SQL SECURITY DEFINER VIEW view1 AS SELECT test.id AS id FROM test with check option;
+ALTER ALGORITHM = UNDEFINED DEFINER = mysql_test SQL SECURITY DEFINER VIEW view2 AS SELECT test.id AS id FROM test with local check option;
+ALTER ALGORITHM = UNDEFINED DEFINER = mysql_test SQL SECURITY DEFINER VIEW view3 AS SELECT test.id AS id FROM test with cascaded check option;
