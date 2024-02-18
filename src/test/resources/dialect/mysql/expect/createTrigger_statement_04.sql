@@ -1,0 +1,20 @@
+CREATE TABLE table3 (
+	id INTEGER,
+	name VARCHAR(10),
+	col VARCHAR(20),
+	PRIMARY KEY (id)
+);
+-- DEFINER `mysql_test`@`%`
+CREATE OR REPLACE FUNCTION createFunction_58e6c454b7864573b71b7d6fb6b252c0() RETURNS TRIGGER AS
+$$
+DECLARE
+BEGIN
+new.col := concat(new.name, new.id);
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger3
+BEFORE INSERT ON table3
+FOR EACH ROW
+EXECUTE PROCEDURE createFunction_58e6c454b7864573b71b7d6fb6b252c0();

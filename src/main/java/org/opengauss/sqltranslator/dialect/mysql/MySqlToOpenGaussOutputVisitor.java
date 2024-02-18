@@ -2103,12 +2103,10 @@ public class MySqlToOpenGaussOutputVisitor extends MySqlOutputVisitor {
                 println();
             }
         }
-        if (! (x.getBody() instanceof SQLSetStatement)) {
-            if (x.isUpdate() || x.isInsert()) {
-                println("RETURN NEW;");
-            } else {
-                println("RETURN OLD;");
-            }
+        if (x.isUpdate() || x.isInsert()) {
+            println("RETURN NEW;");
+        } else {
+            println("RETURN OLD;");
         }
         println("END;");
         println("$$ LANGUAGE plpgsql;");
