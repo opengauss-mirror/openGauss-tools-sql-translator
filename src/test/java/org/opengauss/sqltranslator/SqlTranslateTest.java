@@ -122,6 +122,12 @@ public class SqlTranslateTest {
     }
 
     @Test
+    public void test_createTrigger04() throws IOException {
+        String[] sqlContents = execFile("createTrigger_statement_04.sql");
+        assertEquals(sqlContents[1], sqlContents[2]);
+    }
+
+    @Test
     public void test_dataType() throws IOException {
         String[] sqlContents = execFile("dataType_statement.sql");
         assertEquals(sqlContents[1], sqlContents[2]);

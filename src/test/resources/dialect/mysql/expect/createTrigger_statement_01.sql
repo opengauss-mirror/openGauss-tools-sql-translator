@@ -1,13 +1,12 @@
 CREATE TABLE t_employee (
 	work_year INTEGER
 );
--- DEFINER `root`@`%`
+-- DEFINER `mysql_test`@`%`
 CREATE OR REPLACE FUNCTION createFunction_1692ab45b3a540ca863d5612ed34a1b0() RETURNS TRIGGER AS
 $$
 DECLARE
 BEGIN
-new.work_year := 0;
-new.work_year := 1;
+new.work_year := 10;
 WHILE new.work_year > 0 LOOP
 	new.work_year := new.work_year - 1;
 END LOOP;

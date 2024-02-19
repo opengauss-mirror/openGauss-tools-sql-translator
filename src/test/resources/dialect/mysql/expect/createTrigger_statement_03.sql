@@ -1,3 +1,12 @@
+CREATE TABLE table1 (
+	id INTEGER,
+	name VARCHAR(50)
+);
+CREATE TABLE table2 (
+	id INTEGER,
+	name VARCHAR(50)
+);
+-- DEFINER `mysql_test`@`%`
 CREATE OR REPLACE FUNCTION createFunction_a92a685008044eac9628e1d7ff309c43() RETURNS TRIGGER AS
 $$
 DECLARE
